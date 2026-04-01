@@ -1,0 +1,25 @@
+{
+  "name": "logseq-claude",
+  "version": "0.1.0",
+  "main": "index.html",
+  "logseq": {
+    "id": "logseq-claude",
+    "title": "Ask Claude",
+    "icon": "🤖",
+    "settingsSchema": [
+      {
+        "key": "apiKey",
+        "type": "string",
+        "default": "",
+        "title": "Anthropic API Key",
+        "description": "Your Anthropic API key"
+      },
+      {
+        "key": "model",
+        "type": "string",
+        "default": "claude-sonnet-4-5",
+        "title": "Model"
+      }
+    ]
+  }
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" /></head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@logseq/libs/dist/lsplugin.user.min.js"></script>
+<script>
+async function askClaude(prompt) {
+  const { apiKey, model } = logseq.settings;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-allow-browser': 'true'
+    },
+    body: JSON.stringify({
+      model: model || 'claude-sonnet-4-5',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content[0].text;
+}
+
+logseq.ready(() => {
+  logseq.Editor.registerSlashCommand('Ask Claude', async () => {
+    const block = await logseq.Editor.getCurrentBlock();
+    if (!block?.content) return;
+    await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
+    try {
+      const reply = await askClaude(block.content);
+      const children = await logseq.Editor.getBlock(block.uuid, { includeChildren: true });
+      const placeholder = children?.children?.[0];
+      if (placeholder) await logseq.Editor.updateBlock(placeholder.uuid, reply);
+    } catch (e) {
+      logseq.UI.showMsg(e.message, 'error');
+    }
+  });
+});
+</script>
+</body>
+</html>
