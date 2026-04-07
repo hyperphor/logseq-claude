@@ -104,13 +104,26 @@ function markdownToBlocks(md) {
   return result;
 }
 
+async function buildPrompt(block) {
+  const chain = [block.content];
+  let current = block;
+  while (current.parent && current.parent.id !== current.page.id) {
+    const parent = await logseq.Editor.getBlock(current.parent.id);
+    if (!parent) break;
+    chain.unshift(parent.content);
+    current = parent;
+  }
+  return chain.join('\n');
+}
+
 logseq.ready(() => {
   logseq.Editor.registerSlashCommand('Ask Claude', async () => {
     const block = await logseq.Editor.getCurrentBlock();
     if (!block?.content) return;
     const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
     try {
-      const reply = await askClaude(block.content);
+      const prompt = await buildPrompt(block);
+      const reply = await askClaude(prompt);
       const blocks = markdownToBlocks(reply);
       await logseq.Editor.removeBlock(placeholder.uuid);
       await logseq.Editor.insertBatchBlock(block.uuid, blocks, { sibling: false });
