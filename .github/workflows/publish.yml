@@ -1,0 +1,24 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package plugin
+        run: |
+          zip logseq-claude.zip package.json index.html index.js logo.png logo.svg README.md
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: logseq-claude.zip
+          generate_release_notes: true
