@@ -1,24 +1,30 @@
 {
   "name": "logseq-claude",
   "version": "0.1.1",
+  "description": "Ask Claude AI directly from any Logseq block using a slash command. Responses are inserted as nested blocks with full markdown support.",
   "main": "index.html",
+  "author": "Mike Travers",
+  "repository": "https://github.com/hyperphor/logseq-claude",
+  "license": "MIT",
   "logseq": {
     "id": "logseq-claude",
     "title": "Ask Claude",
-    "icon": "🤖",
+    "icon": "logo.png",
+    "repo": "hyperphor/logseq-claude",
     "settingsSchema": [
       {
         "key": "apiKey",
         "type": "string",
         "default": "",
         "title": "Anthropic API Key",
-        "description": "Your Anthropic API key"
+        "description": "Your Anthropic API key (get one at console.anthropic.com)"
       },
       {
         "key": "model",
         "type": "string",
         "default": "claude-sonnet-4-5",
-        "title": "Model"
+        "title": "Model",
+        "description": "Anthropic model ID (e.g. claude-sonnet-4-5, claude-opus-4-5)"
       }
     ]
   }
