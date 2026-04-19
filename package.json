@@ -32,6 +32,14 @@
         "default": "Be direct and concise. Do not use filler phrases like 'that is a great question', 'that is genuinely interesting', 'certainly', or 'of course'. Get straight to the point.",
         "title": "System Prompt",
         "description": "System prompt sent with every request. Use this to set Claude's tone and style."
+      },
+      {
+        "key": "contextMode",
+        "type": "enum",
+        "enumChoices": ["ancestors", "page", "block"],
+        "default": "ancestors",
+        "title": "Context Mode",
+        "description": "How much context to include: 'ancestors' = parent chain (default), 'page' = entire page content above current block, 'block' = current block only"
       }
     ]
   }

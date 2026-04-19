@@ -102,6 +102,30 @@ function markdownToBlocks(md) {
 }
 
 async function buildPrompt(block) {
+  const mode = logseq.settings.contextMode || 'ancestors';
+
+  if (mode === 'block') {
+    return block.content;
+  }
+
+  if (mode === 'page') {
+    const pageBlocks = await logseq.Editor.getPageBlocksTree(block.page.name);
+    const lines = [];
+    function collectUntil(blocks) {
+      for (const b of blocks) {
+        if (b.content) lines.push(b.content);
+        if (b.uuid === block.uuid) return true;
+        if (b.children && b.children.length > 0) {
+          if (collectUntil(b.children)) return true;
+        }
+      }
+      return false;
+    }
+    collectUntil(pageBlocks);
+    return lines.join('\n');
+  }
+
+  // ancestors (default)
   const chain = [block.content];
   let current = block;
   while (current.parent && current.parent.id !== current.page.id) {
@@ -115,7 +139,9 @@ async function buildPrompt(block) {
 
 logseq.ready(() => {
   logseq.Editor.registerSlashCommand('Ask Claude', async () => {
-    const block = await logseq.Editor.getCurrentBlock();
+    const blockRef = await logseq.Editor.getCurrentBlock();
+    if (!blockRef?.uuid) return;
+    const block = await logseq.Editor.getBlock(blockRef.uuid);
     if (!block?.content) return;
     const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
     try {
