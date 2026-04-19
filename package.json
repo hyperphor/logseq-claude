@@ -25,6 +25,13 @@
         "default": "claude-sonnet-4-5",
         "title": "Model",
         "description": "Anthropic model ID (e.g. claude-sonnet-4-5, claude-opus-4-5)"
+      },
+      {
+        "key": "systemPrompt",
+        "type": "string",
+        "default": "Be direct and concise. Do not use filler phrases like 'that is a great question', 'that is genuinely interesting', 'certainly', or 'of course'. Get straight to the point.",
+        "title": "System Prompt",
+        "description": "System prompt sent with every request. Use this to set Claude's tone and style."
       }
     ]
   }

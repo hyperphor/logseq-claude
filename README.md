@@ -21,6 +21,7 @@ In Logseq, go to **Settings → Plugins → Ask Claude**:
 
 - **Anthropic API Key** — your API key (required)
 - **Model** — model ID to use (default: `claude-sonnet-4-5`)
+- **System Prompt** – passed to Anthropic, tunes response
 
 ## Usage
 

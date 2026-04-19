@@ -1,5 +1,12 @@
 async function askClaude(prompt) {
-  const { apiKey, model } = logseq.settings;
+  const { apiKey, model, systemPrompt } = logseq.settings;
+  const body = {
+    model: model || 'claude-sonnet-4-5',
+    max_tokens: 2048,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  if (systemPrompt) body.system = systemPrompt;
+    // console.log("api: " + body);
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -8,11 +15,7 @@ async function askClaude(prompt) {
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-allow-browser': 'true'
     },
-    body: JSON.stringify({
-      model: model || 'claude-sonnet-4-5',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    body: JSON.stringify(body)
   });
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
@@ -117,9 +120,10 @@ logseq.ready(() => {
     const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
     try {
       const prompt = await buildPrompt(block);
+	console.log("Prompt: " + prompt);
       const reply = await askClaude(prompt);
       const blocks = markdownToBlocks(reply);
-	console.log("Prompt: " + prompt);
+
       await logseq.Editor.removeBlock(placeholder.uuid);
       await logseq.Editor.insertBatchBlock(block.uuid, blocks, { sibling: false });
     } catch (e) {
