@@ -161,4 +161,29 @@ logseq.ready(() => {
       logseq.UI.showMsg(e.message, 'error');
     }
   });
+
+  async function claudeCommand(label, prefix) {
+    const block = await logseq.Editor.getCurrentBlock();
+    if (!block?.content) return;
+    const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
+    try {
+      const prompt = prefix + await buildPrompt(block);
+      const reply = await askClaude(prompt);
+      const blocks = markdownToBlocks(reply);
+      await logseq.Editor.removeBlock(placeholder.uuid);
+      await logseq.Editor.insertBatchBlock(block.uuid, blocks, { sibling: false });
+    } catch (e) {
+      await logseq.Editor.updateBlock(placeholder.uuid, `Error: ${e.message}`);
+      logseq.UI.showMsg(e.message, 'error');
+    }
+  }
+
+  logseq.Editor.registerSlashCommand('Claude: Summarize', () =>
+    claudeCommand('Summarize', 'Summarize the following concisely:\n\n'));
+
+  logseq.Editor.registerSlashCommand('Claude: Improve Writing', () =>
+    claudeCommand('Improve Writing', 'Improve the clarity and style of the following text. Return only the improved version, no explanation:\n\n'));
+
+  logseq.Editor.registerSlashCommand('Claude: Explain', () =>
+    claudeCommand('Explain', 'Explain the following simply and clearly:\n\n'));
 });
