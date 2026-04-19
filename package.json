@@ -40,6 +40,13 @@
         "default": "ancestors",
         "title": "Context Mode",
         "description": "How much context to include: 'ancestors' = parent chain (default), 'page' = entire page content above current block, 'block' = current block only"
+      },
+      {
+        "key": "responseTag",
+        "type": "string",
+        "default": "",
+        "title": "Response Tag",
+        "description": "If set, this tag is appended to the first inserted response block (e.g. '#ai-response'). Leave blank to disable."
       }
     ]
   }
