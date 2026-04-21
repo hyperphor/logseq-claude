@@ -150,8 +150,8 @@ logseq.ready(() => {
       const reply = await askClaude(prompt);
       const blocks = markdownToBlocks(reply);
       const tag = logseq.settings.responseTag;
-      if (tag && blocks.length > 0) {
-        blocks[0].content = blocks[0].content + ' ' + tag;
+      if (tag) {
+        await logseq.Editor.updateBlock(block.uuid, block.content + ' ' + tag);
       }
 
       await logseq.Editor.removeBlock(placeholder.uuid);
