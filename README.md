@@ -1,13 +1,17 @@
 # Ask Claude
 
-A Logseq plugin that lets you query Claude AI directly from any block using the `/Ask Claude` slash command. Responses are inserted as nested child blocks with full markdown support (lists, code blocks, headers).
+A Logseq plugin that lets you query Claude AI directly from any block using slash commands. Responses are inserted as nested child blocks with full markdown support (lists, code blocks, headers).
 
-## Features
+## Commands
 
-- `/Ask Claude` slash command on any block
-- Sends the block and its parent context to Claude
-- Response inserted as structured nested blocks
-- Configurable model (defaults to `claude-sonnet-4-5`)
+| Command | Context sent | Description |
+|---------|-------------|-------------|
+| `/Ask Claude` | Ancestor chain | General-purpose query |
+| `/Ask Claude (page)` | Full page up to current block | Query with broad page context |
+| `/Ask Claude (block)` | Current block only | Query without any surrounding context |
+| `/Claude: Summarize` | Ancestor chain | Summarize concisely |
+| `/Claude: Improve Writing` | Current block only | Rewrite for clarity and style |
+| `/Claude: Explain` | Ancestor chain | Explain simply and clearly |
 
 ## Installation
 
@@ -21,13 +25,8 @@ In Logseq, go to **Settings → Plugins → Ask Claude**:
 
 - **Anthropic API Key** — your API key (required)
 - **Model** — model ID to use (default: `claude-sonnet-4-5`)
-- **System Prompt** – passed to Anthropic, tunes response
-
-## Usage
-
-Place your cursor in a block and type `/Ask Claude`. Claude's response will be inserted as child blocks beneath the current block.
-
-Parent blocks are included as context, so you can use a parent block as a system prompt or topic header.
+- **System Prompt** — sent with every request; tune Claude's tone and style
+- **Response Tag** — if set (e.g. `#ai`), this tag is appended to the block from which the command was invoked, making AI-assisted blocks easy to find with Logseq queries
 
 ## License
 
