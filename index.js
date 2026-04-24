@@ -107,7 +107,8 @@ async function buildPrompt(block, mode = 'ancestors') {
   }
 
   if (mode === 'page') {
-    const pageBlocks = await logseq.Editor.getPageBlocksTree(block.page.name);
+    const page = await logseq.Editor.getPage(block.page.id);
+    const pageBlocks = await logseq.Editor.getPageBlocksTree(page.name);
     const lines = [];
     function collectUntil(blocks) {
       for (const b of blocks) {
@@ -158,8 +159,7 @@ logseq.ready(() => {
   async function getCurrentBlock() {
     const blockRef = await logseq.Editor.getCurrentBlock();
     if (!blockRef?.uuid) return null;
-    const block = await logseq.Editor.getBlock(blockRef.uuid);
-    return block?.content ? block : null;
+    return await logseq.Editor.getBlock(blockRef.uuid);
   }
 
   logseq.Editor.registerSlashCommand('Ask Claude', async () => {
