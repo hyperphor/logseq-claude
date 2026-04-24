@@ -101,9 +101,7 @@ function markdownToBlocks(md) {
   return result;
 }
 
-async function buildPrompt(block) {
-  const mode = logseq.settings.contextMode || 'ancestors';
-
+async function buildPrompt(block, mode = 'ancestors') {
   if (mode === 'block') {
     return block.content;
   }
@@ -138,38 +136,17 @@ async function buildPrompt(block) {
 }
 
 logseq.ready(() => {
-  logseq.Editor.registerSlashCommand('Ask Claude', async () => {
-    const blockRef = await logseq.Editor.getCurrentBlock();
-    if (!blockRef?.uuid) return;
-    const block = await logseq.Editor.getBlock(blockRef.uuid);
-    if (!block?.content) return;
+  async function askBlock(block, mode, prefix = '') {
     const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
     try {
-      const prompt = await buildPrompt(block);
-	console.log("Prompt: " + prompt);
+      const prompt = prefix + await buildPrompt(block, mode);
+      console.log("Prompt: " + prompt);
       const reply = await askClaude(prompt);
       const blocks = markdownToBlocks(reply);
       const tag = logseq.settings.responseTag;
       if (tag) {
         await logseq.Editor.updateBlock(block.uuid, block.content + ' ' + tag);
       }
-
-      await logseq.Editor.removeBlock(placeholder.uuid);
-      await logseq.Editor.insertBatchBlock(block.uuid, blocks, { sibling: false });
-    } catch (e) {
-      await logseq.Editor.updateBlock(placeholder.uuid, `Error: ${e.message}`);
-      logseq.UI.showMsg(e.message, 'error');
-    }
-  });
-
-  async function claudeCommand(label, prefix) {
-    const block = await logseq.Editor.getCurrentBlock();
-    if (!block?.content) return;
-    const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
-    try {
-      const prompt = prefix + await buildPrompt(block);
-      const reply = await askClaude(prompt);
-      const blocks = markdownToBlocks(reply);
       await logseq.Editor.removeBlock(placeholder.uuid);
       await logseq.Editor.insertBatchBlock(block.uuid, blocks, { sibling: false });
     } catch (e) {
@@ -178,12 +155,40 @@ logseq.ready(() => {
     }
   }
 
-  logseq.Editor.registerSlashCommand('Claude: Summarize', () =>
-    claudeCommand('Summarize', 'Summarize the following concisely:\n\n'));
+  async function getCurrentBlock() {
+    const blockRef = await logseq.Editor.getCurrentBlock();
+    if (!blockRef?.uuid) return null;
+    const block = await logseq.Editor.getBlock(blockRef.uuid);
+    return block?.content ? block : null;
+  }
 
-  logseq.Editor.registerSlashCommand('Claude: Improve Writing', () =>
-    claudeCommand('Improve Writing', 'Improve the clarity and style of the following text. Return only the improved version, no explanation:\n\n'));
+  logseq.Editor.registerSlashCommand('Ask Claude', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'ancestors');
+  });
 
-  logseq.Editor.registerSlashCommand('Claude: Explain', () =>
-    claudeCommand('Explain', 'Explain the following simply and clearly:\n\n'));
+  logseq.Editor.registerSlashCommand('Ask Claude (page)', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'page');
+  });
+
+  logseq.Editor.registerSlashCommand('Ask Claude (block)', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'block');
+  });
+
+  logseq.Editor.registerSlashCommand('Claude: Summarize', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'ancestors', 'Summarize the following concisely:\n\n');
+  });
+
+  logseq.Editor.registerSlashCommand('Claude: Improve Writing', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'block', 'Improve the clarity and style of the following text. Return only the improved version, no explanation:\n\n');
+  });
+
+  logseq.Editor.registerSlashCommand('Claude: Explain', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'ancestors', 'Explain the following simply and clearly:\n\n');
+  });
 });
