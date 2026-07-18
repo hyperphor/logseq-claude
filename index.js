@@ -109,7 +109,7 @@ async function buildPrompt(block, mode = 'ancestors') {
   if (mode === 'page') {
     const page = await logseq.Editor.getPage(block.page.id);
     const pageBlocks = await logseq.Editor.getPageBlocksTree(page.name);
-    const lines = [];
+    const lines = [`# ${page.name}`];
     function collectUntil(blocks) {
       for (const b of blocks) {
         if (b.content) lines.push(b.content);
