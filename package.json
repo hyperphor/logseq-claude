@@ -39,6 +39,13 @@
         "default": "",
         "title": "Response Tag",
         "description": "If set, this tag is appended to the first inserted response block (e.g. '#ai-response'). Leave blank to disable."
+      },
+      {
+        "key": "defaultProjectPath",
+        "type": "string",
+        "default": "",
+        "title": "Default Project Path",
+        "description": "Informational only — shown in the /PushClaudeCode toast and spec header as the project to run Claude Code in. A page-level 'project::' property overrides this. The plugin cannot open or run anything at this path."
       }
     ]
   }

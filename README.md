@@ -23,6 +23,7 @@ A Logseq plugin that lets you query Claude AI directly from any block using slas
 | `/Claude: Summarize` | Ancestor chain | Summarize concisely |
 | `/Claude: Improve Writing` | Current block only | Rewrite for clarity and style |
 | `/Claude: Explain` | Ancestor chain | Explain simply and clearly |
+| `/PushClaudeCode` | Full page | Copy the page as a markdown spec to the clipboard, for pasting into `claude` in a target project (see [spec/claude-code.md](spec/claude-code.md)) |
 
 ## Installation
 
@@ -38,6 +39,7 @@ In Logseq, go to **Settings → Plugins → Ask Claude**:
 - **Model** — model ID to use (default: `claude-sonnet-4-5`)
 - **System Prompt** — sent with every request; tune Claude's tone and style
 - **Response Tag** — if set (e.g. `#ai`), this tag is appended to the block from which the command was invoked, making AI-assisted blocks easy to find with Logseq queries
+- **Default Project Path** — informational only, used by `/PushClaudeCode` to label the target project in its toast and spec header (e.g. `/Users/me/code/my-repo`). A page-level `project:: myrepo` property overrides this per page. The plugin cannot open or run anything at this path — see [spec/claude-code.md](spec/claude-code.md) for why.
 
 ## Credits
 

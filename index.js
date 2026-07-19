@@ -136,6 +136,60 @@ async function buildPrompt(block, mode = 'ancestors') {
   return chain.join('\n');
 }
 
+// Heuristic: is this the page's properties ("pre-block") block? Logseq
+// exposes this as `preBlock` / `pre-block?` depending on API version, so
+// check both, and fall back to a content-shape check (every line looks
+// like `key:: value`) so this still works if neither flag is present.
+function isPropertiesBlock(block) {
+  if (!block) return false;
+  if (block.preBlock || block['pre-block?']) return true;
+  if (!block.content) return false;
+  const lines = block.content.split('\n').map(l => l.trim()).filter(l => l !== '');
+  if (lines.length === 0) return false;
+  return lines.every(l => /^[A-Za-z0-9_-]+::\s*/.test(l));
+}
+
+// Render a block tree (as returned by getPageBlocksTree) into nested
+// markdown list items, preserving the outline structure.
+function blocksToMarkdown(blocks, depth = 0) {
+  const lines = [];
+  const indent = '  '.repeat(depth);
+  for (const b of blocks) {
+    if (b.content) {
+      const contentLines = b.content.split('\n');
+      lines.push(indent + '- ' + contentLines[0]);
+      for (const extra of contentLines.slice(1)) {
+        lines.push(indent + '  ' + extra);
+      }
+    }
+    if (b.children && b.children.length > 0) {
+      lines.push(...blocksToMarkdown(b.children, depth + 1));
+    }
+  }
+  return lines;
+}
+
+// Build a full markdown "spec" document from an entire page: title,
+// optional target-project note, then the page outline (properties block
+// excluded). Unlike buildPrompt('page', …), this does not stop at any
+// particular block — it always renders the whole page.
+function buildPageSpec(pageTitle, pageBlocks, project) {
+  const lines = [`# ${pageTitle}`];
+  if (project) lines.push('', `_Target project: ${project}_`);
+  const [first, ...rest] = pageBlocks;
+  const body = first && isPropertiesBlock(first) ? rest : pageBlocks;
+  lines.push('', ...blocksToMarkdown(body, 0));
+  return lines.join('\n');
+}
+
+// project:: <value> on the page's properties block, if present.
+function readProjectProperty(pageBlocks) {
+  const first = pageBlocks[0];
+  if (!first || !first.content) return null;
+  const m = first.content.match(/^project::\s*(.+)$/m);
+  return m ? m[1].trim() : null;
+}
+
 logseq.ready(() => {
   async function askBlock(block, mode, prefix = '') {
     const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
@@ -190,5 +244,45 @@ logseq.ready(() => {
   logseq.Editor.registerSlashCommand('Claude: Explain', async () => {
     const block = await getCurrentBlock();
     if (block) await askBlock(block, 'ancestors', 'Explain the following simply and clearly:\n\n');
+  });
+
+  // Turns the current page into a markdown "spec" and hands it off for use
+  // with Claude Code. The plugin sandbox has no verified way to invoke the
+  // `claude` CLI or write files outside Logseq's own storage (see
+  // spec/claude-code.md) — so this copies the spec to the clipboard and
+  // tells the user where to paste it, falling back to inserting it as a
+  // code block if the clipboard write fails.
+  logseq.Editor.registerSlashCommand('PushClaudeCode', async () => {
+    const block = await getCurrentBlock();
+    if (!block) return;
+    try {
+      const page = await logseq.Editor.getPage(block.page.id);
+      const pageBlocks = await logseq.Editor.getPageBlocksTree(page.name);
+      const project = readProjectProperty(pageBlocks) || logseq.settings.defaultProjectPath || null;
+      const spec = buildPageSpec(page.originalName || page.name, pageBlocks, project);
+
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(spec);
+        copied = true;
+      } catch (e1) {
+        try {
+          await parent.navigator.clipboard.writeText(spec);
+          copied = true;
+        } catch (e2) {
+          copied = false;
+        }
+      }
+
+      const where = project ? ` in ${project}` : '';
+      if (copied) {
+        logseq.UI.showMsg(`Spec copied to clipboard. Run "claude"${where} and paste it in.`, 'success');
+      } else {
+        await logseq.Editor.insertBlock(block.uuid, '```markdown\n' + spec + '\n```', { sibling: false });
+        logseq.UI.showMsg(`Could not copy to clipboard. Spec inserted below — copy it and run "claude"${where}.`, 'warning');
+      }
+    } catch (e) {
+      logseq.UI.showMsg(e.message, 'error');
+    }
   });
 });
