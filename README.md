@@ -23,6 +23,7 @@ A Logseq plugin that lets you query Claude AI directly from any block using slas
 | `/Claude: Summarize` | Ancestor chain | Summarize concisely |
 | `/Claude: Improve Writing` | Current block only | Rewrite for clarity and style |
 | `/Claude: Explain` | Ancestor chain | Explain simply and clearly |
+| `/Import Google Voice` | Journal page's date | Scaffold — resolves the journal date and inserts matching Google Voice recordings from a local Takeout export. Local file reading isn't implemented yet; see [`spec/voice.md`](spec/voice.md) |
 
 ## Installation
 
@@ -38,6 +39,8 @@ In Logseq, go to **Settings → Plugins → Ask Claude**:
 - **Model** — model ID to use (default: `claude-sonnet-4-5`)
 - **System Prompt** — sent with every request; tune Claude's tone and style
 - **Response Tag** — if set (e.g. `#ai`), this tag is appended to the block from which the command was invoked, making AI-assisted blocks easy to find with Logseq queries
+- **Google Voice Export Path** — local path to an unzipped Google Takeout export root, used by `/Import Google Voice`. Local file reading isn't implemented yet — see [`spec/voice.md`](spec/voice.md)
+- **Google Voice: Include Audio Link** — when importing recordings, also insert a link to the local `.mp3` alongside the transcript (default on)
 
 ## Credits
 

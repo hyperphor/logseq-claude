@@ -39,6 +39,20 @@
         "default": "",
         "title": "Response Tag",
         "description": "If set, this tag is appended to the first inserted response block (e.g. '#ai-response'). Leave blank to disable."
+      },
+      {
+        "key": "googleVoiceExportPath",
+        "type": "string",
+        "default": "",
+        "title": "Google Voice Export Path",
+        "description": "Local path to an unzipped Google Takeout export root (the folder containing Voice/), used by /Import Google Voice. Local file reading is not implemented yet — see spec/voice.md."
+      },
+      {
+        "key": "googleVoiceIncludeAudioLink",
+        "type": "boolean",
+        "default": true,
+        "title": "Google Voice: Include Audio Link",
+        "description": "When importing Google Voice recordings, also insert a link to the local .mp3 alongside the transcript."
       }
     ]
   }
