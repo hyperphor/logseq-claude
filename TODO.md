@@ -1,4 +1,4 @@
-# TODO include title 
+# DONE include title 
 in Page mode and perhaps elsewhere, its often necessary 
 
 # TODO conversation support
