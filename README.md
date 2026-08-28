@@ -38,6 +38,7 @@ In Logseq, go to **Settings → Plugins → Ask Claude**:
 - **Model** — model ID to use (default: `claude-sonnet-4-5`)
 - **System Prompt** — sent with every request; tune Claude's tone and style
 - **Response Tag** — if set (e.g. `#ai`), this tag is appended to the block from which the command was invoked, making AI-assisted blocks easy to find with Logseq queries
+- **Web Access** — on by default; lets Claude fetch a linked URL or search the web when answering, instead of only using training data
 
 ## Credits
 

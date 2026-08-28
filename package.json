@@ -39,6 +39,13 @@
         "default": "",
         "title": "Response Tag",
         "description": "If set, this tag is appended to the first inserted response block (e.g. '#ai-response'). Leave blank to disable."
+      },
+      {
+        "key": "webAccess",
+        "type": "boolean",
+        "default": true,
+        "title": "Web Access",
+        "description": "Let Claude fetch URLs and search the web when answering, instead of relying only on training data."
       }
     ]
   }

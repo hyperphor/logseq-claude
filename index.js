@@ -1,25 +1,47 @@
+// Server-side tools so Claude can follow a link or search instead of refusing
+// ("I can't access URLs..."). web_fetch only works on a URL already present
+// in the prompt; web_search covers everything else. No beta header needed.
+// Using the basic (non-dynamic-filtering) tool versions since the model is
+// user-configurable and may be older than Opus/Sonnet 4.6, which is required
+// for the newer _20260209 variants.
+const WEB_TOOLS = [
+  { type: 'web_search_20250305', name: 'web_search' },
+  { type: 'web_fetch_20250910', name: 'web_fetch' }
+];
+
 async function askClaude(prompt) {
-  const { apiKey, model, systemPrompt } = logseq.settings;
-  const body = {
-    model: model || 'claude-sonnet-4-5',
-    max_tokens: 2048,
-    messages: [{ role: 'user', content: prompt }]
-  };
-  if (systemPrompt) body.system = systemPrompt;
-    // console.log("api: " + body);
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-allow-browser': 'true'
-    },
-    body: JSON.stringify(body)
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.content[0].text;
+  const { apiKey, model, systemPrompt, webAccess } = logseq.settings;
+  const messages = [{ role: 'user', content: prompt }];
+  let data;
+  // Loop to resume if a server-tool round hits its internal iteration cap
+  // (stop_reason "pause_turn") — otherwise we'd return a half-finished answer.
+  for (let i = 0; i < 5; i++) {
+    const body = {
+      model: model || 'claude-sonnet-4-5',
+      max_tokens: 2048,
+      messages
+    };
+    if (systemPrompt) body.system = systemPrompt;
+    if (webAccess !== false) body.tools = WEB_TOOLS;
+    // console.log("api: " + JSON.stringify(body));
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
+      body: JSON.stringify(body)
+    });
+    data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    if (data.stop_reason !== 'pause_turn') break;
+    messages.push({ role: 'assistant', content: data.content });
+  }
+  // With tools enabled, content can include server_tool_use / tool_result
+  // blocks alongside text — join just the text blocks for the answer.
+  return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n\n');
 }
 
 function nestListItems(items) {
