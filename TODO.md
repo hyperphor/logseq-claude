@@ -4,8 +4,12 @@ in Page mode and perhaps elsewhere, its often necessary
 # TODO conversation support
 Not sure how that works but without it this is just annoying to use, inferior to just using Claude and pasting if necessary
 
-# TODO bad bug on first use
-Apparently doesnt pick up the whole block for prompt	
+# DONE bad bug on first use
+Apparently doesnt pick up the whole block for prompt
+Root cause: `getBlock()` reads the persisted block content, which Logseq hasn't
+flushed yet on a block's first edit in a session; fixed by reading
+`logseq.Editor.getEditingBlockContent()` (the live editing state) instead, with
+a prefix-aware fallback to strip a leftover slash-trigger fragment.
 
 # TODO logo sux
 coudn't get claude to do anything reaonable. 

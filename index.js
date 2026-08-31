@@ -134,7 +134,11 @@ async function buildPrompt(block, mode = 'ancestors') {
     const lines = [`# ${page.name}`];
     function collectUntil(blocks) {
       for (const b of blocks) {
-        if (b.content) lines.push(b.content);
+        // getPageBlocksTree reads persisted content, which is stale for the
+        // block currently being edited — use the live content we resolved
+        // in getCurrentBlock for that one entry.
+        const content = b.uuid === block.uuid ? block.content : b.content;
+        if (content) lines.push(content);
         if (b.uuid === block.uuid) return true;
         if (b.children && b.children.length > 0) {
           if (collectUntil(b.children)) return true;
@@ -178,10 +182,49 @@ logseq.ready(() => {
     }
   }
 
+  // Slash commands we register — used to strip a leftover trigger fragment below.
+  const SLASH_COMMANDS = [
+    'Ask Claude (page)', 'Ask Claude (block)', 'Ask Claude',
+    'Claude: Summarize', 'Claude: Improve Writing', 'Claude: Explain'
+  ];
+
+  // Defensive cleanup: while typing a slash command Logseq only ever shows a
+  // *prefix* in the textarea (e.g. "/ask", or bare "/") until a menu item is
+  // picked, so match a trailing "/<partial>" fragment (anchored so we don't
+  // eat a URL or file path ending in a slash) and strip it if it's a
+  // case-insensitive prefix of one of our registered command names.
+  function stripSlashTrigger(content) {
+    const m = content.match(/(?:^|\s)(\/[^\s/]*)$/);
+    if (!m) return content;
+    const typed = m[1].slice(1).toLowerCase();
+    const isOurCommand = SLASH_COMMANDS.some(name => name.toLowerCase().startsWith(typed));
+    if (!isOurCommand) return content;
+    return content.slice(0, content.length - m[1].length).trimEnd();
+  }
+
   async function getCurrentBlock() {
     const blockRef = await logseq.Editor.getCurrentBlock();
     if (!blockRef?.uuid) return null;
-    return await logseq.Editor.getBlock(blockRef.uuid);
+    const block = await logseq.Editor.getBlock(blockRef.uuid);
+    if (!block) return null;
+    // block.content (from getBlock) is read from the persisted block entity,
+    // which Logseq only updates on blur/save — not on every keystroke. A
+    // slash command fired mid-edit (notably the first edit of a block in a
+    // session) can therefore see stale/incomplete content, missing the text
+    // just typed, including the "/Ask Claude" trigger itself.
+    // getEditingBlockContent() reads the live editing state instead, so
+    // prefer it when available. Logseq's slash-command dispatch is supposed
+    // to strip the trigger text before invoking this callback, but that
+    // couldn't be verified against a live instance, hence stripSlashTrigger
+    // as a belt-and-suspenders fallback.
+    try {
+      const live = await logseq.Editor.getEditingBlockContent();
+      if (live) block.content = live;
+    } catch (e) {
+      // Not in edit mode, or API unavailable — fall back to block.content.
+    }
+    block.content = stripSlashTrigger(block.content);
+    return block;
   }
 
   logseq.Editor.registerSlashCommand('Ask Claude', async () => {
