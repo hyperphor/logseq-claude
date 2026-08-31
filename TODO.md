@@ -24,3 +24,6 @@ DONE? it adds #AskClaude
 # TODO publish 
 https://github.com/logseq/marketplace (not sure its worthwhile)
 
+# DONE weird line breaks
+Cause: markdownToBlocks joined wrapped paragraph lines with \n, which Logseq renders as a visible break; now joins with a space unless the source line has a hard break.
+
