@@ -7,8 +7,8 @@ Not sure how that works but without it this is just annoying to use, inferior to
 # TODO bad bug on first use
 Apparently doesnt pick up the whole block for prompt	
 
-# TODO logo sux
-coudn't get claude to do anything reaonable. 
+# DONE logo sux
+New design: a Logseq bullet growing into a speech bubble with a question mark (terracotta on dark square), hand-authored SVG paths, no gradients/text glyphs. logo.png regenerated from it via rsvg-convert at 128x128.
 
 # TODO needs more context 
 either whole page, or everything above current block.
