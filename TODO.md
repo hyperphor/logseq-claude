@@ -1,8 +1,8 @@
 # DONE include title 
 in Page mode and perhaps elsewhere, its often necessary 
 
-# TODO conversation support
-Not sure how that works but without it this is just annoying to use, inferior to just using Claude and pasting if necessary
+# DONE conversation support
+/Claude: Continue, invoked from a new follow-up block alongside a prior reply, replays that exchange (prompt + reply) as message history plus the follow-up.
 
 # TODO bad bug on first use
 Apparently doesnt pick up the whole block for prompt	
