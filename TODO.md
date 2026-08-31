@@ -10,9 +10,10 @@ Apparently doesnt pick up the whole block for prompt
 # TODO logo sux
 coudn't get claude to do anything reaonable. 
 
-# TODO needs more context 
+# DONE needs more context 
 either whole page, or everything above current block.
   partly DONE, uses the latter. Needs more control 
+  DONE: added contextDepth setting to cap ancestor levels walked in ancestors mode
 
 # TODO (maybe) more prompts and fanciness 
 a la the OpenAI 3 plugin, whi

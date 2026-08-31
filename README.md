@@ -17,7 +17,7 @@ A Logseq plugin that lets you query Claude AI directly from any block using slas
 
 | Command | Context sent | Description |
 |---------|-------------|-------------|
-| `/Ask Claude` | Ancestor chain | General-purpose query |
+| `/Ask Claude` | Ancestor chain (capped by Context Depth) | General-purpose query |
 | `/Ask Claude (page)` | Full page up to current block | Query with broad page context |
 | `/Ask Claude (block)` | Current block only | Query without any surrounding context |
 | `/Claude: Summarize` | Ancestor chain | Summarize concisely |
@@ -39,6 +39,7 @@ In Logseq, go to **Settings → Plugins → Ask Claude**:
 - **System Prompt** — sent with every request; tune Claude's tone and style
 - **Response Tag** — if set (e.g. `#ai`), this tag is appended to the block from which the command was invoked, making AI-assisted blocks easy to find with Logseq queries
 - **Web Access** — on by default; lets Claude fetch a linked URL or search the web when answering, instead of only using training data
+- **Context Depth** — caps how many ancestor levels `/Ask Claude` walks up (0 = unlimited, up to the page root)
 
 ## Credits
 

@@ -46,6 +46,13 @@
         "default": true,
         "title": "Web Access",
         "description": "Let Claude fetch URLs and search the web when answering, instead of relying only on training data."
+      },
+      {
+        "key": "contextDepth",
+        "type": "number",
+        "default": 0,
+        "title": "Context Depth",
+        "description": "Max ancestor levels to include in '/Ask Claude' (ancestors mode). 0 = unlimited (walk up to the page root)."
       }
     ]
   }

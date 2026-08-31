@@ -146,14 +146,19 @@ async function buildPrompt(block, mode = 'ancestors') {
     return lines.join('\n');
   }
 
-  // ancestors (default)
+  // ancestors (default) — walk up to the page root, or up to contextDepth
+  // levels if that setting is a positive number.
+  const contextDepth = Number(logseq.settings?.contextDepth) || 0;
   const chain = [block.content];
   let current = block;
+  let levels = 0;
   while (current.parent && current.parent.id !== current.page.id) {
+    if (contextDepth > 0 && levels >= contextDepth) break;
     const parent = await logseq.Editor.getBlock(current.parent.id);
     if (!parent) break;
     chain.unshift(parent.content);
     current = parent;
+    levels++;
   }
   return chain.join('\n');
 }
