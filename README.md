@@ -13,6 +13,10 @@
 
 A Logseq plugin that lets you query Claude AI directly from any block using slash commands. Responses are inserted as nested child blocks with full markdown support (lists, code blocks, headers).
 
+<!-- TODO(marketplace): add a screenshot or short gif of a slash command in action here
+     before submitting/re-submitting to logseq/marketplace — required by their
+     submission checklist. See spec/marketplace-publish.md. -->
+
 ## Commands
 
 | Command | Context sent | Description |
