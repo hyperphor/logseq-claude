@@ -14,8 +14,9 @@ coudn't get claude to do anything reaonable.
 either whole page, or everything above current block.
   partly DONE, uses the latter. Needs more control 
 
-# TODO (maybe) more prompts and fanciness 
+# DONE (maybe) more prompts and fanciness 
 a la the OpenAI 3 plugin, whi
+Added: Brainstorm, Critique, Extract Action Items, Fix Grammar. Skipped Translate — slash commands can't take parameters here.
 
 # TODO option to tag inserted text
 Need this in AMMDI anyway...

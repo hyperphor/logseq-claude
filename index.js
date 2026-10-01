@@ -213,4 +213,24 @@ logseq.ready(() => {
     const block = await getCurrentBlock();
     if (block) await askBlock(block, 'ancestors', 'Explain the following simply and clearly:\n\n');
   });
+
+  logseq.Editor.registerSlashCommand('Claude: Brainstorm', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'ancestors', 'Brainstorm ideas related to the following, as a bulleted list:\n\n');
+  });
+
+  logseq.Editor.registerSlashCommand('Claude: Critique', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'ancestors', 'Critique the following: point out weaknesses, gaps, or risks, and suggest improvements:\n\n');
+  });
+
+  logseq.Editor.registerSlashCommand('Claude: Extract Action Items', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'ancestors', 'Extract concrete action items from the following as a bulleted list. If there are none, say so:\n\n');
+  });
+
+  logseq.Editor.registerSlashCommand('Claude: Fix Grammar', async () => {
+    const block = await getCurrentBlock();
+    if (block) await askBlock(block, 'block', 'Fix grammar and spelling in the following text. Return only the corrected text, no explanation:\n\n');
+  });
 });
