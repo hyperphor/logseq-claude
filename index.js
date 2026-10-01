@@ -9,9 +9,10 @@ const WEB_TOOLS = [
   { type: 'web_fetch_20250910', name: 'web_fetch' }
 ];
 
-async function askClaude(prompt) {
+// Send a full message history (alternating user/assistant turns) to Claude.
+// `messages` is mutated in place when a "pause_turn" round trip occurs.
+async function askClaudeMessages(messages) {
   const { apiKey, model, systemPrompt, webAccess } = logseq.settings;
-  const messages = [{ role: 'user', content: prompt }];
   let data;
   // Loop to resume if a server-tool round hits its internal iteration cap
   // (stop_reason "pause_turn") — otherwise we'd return a half-finished answer.
@@ -42,6 +43,11 @@ async function askClaude(prompt) {
   // With tools enabled, content can include server_tool_use / tool_result
   // blocks alongside text — join just the text blocks for the answer.
   return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n\n');
+}
+
+// Single-turn convenience wrapper around askClaudeMessages.
+async function askClaude(prompt) {
+  return askClaudeMessages([{ role: 'user', content: prompt }]);
 }
 
 function nestListItems(items) {
@@ -159,12 +165,12 @@ async function buildPrompt(block, mode = 'ancestors') {
 }
 
 logseq.ready(() => {
-  async function askBlock(block, mode, prefix = '') {
+  // Shared insertion path: show a placeholder, run `getReply()` to fetch
+  // Claude's answer, then swap the placeholder for the rendered blocks.
+  async function insertReply(block, getReply) {
     const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
     try {
-      const prompt = prefix + await buildPrompt(block, mode);
-      console.log("Prompt: " + prompt);
-      const reply = await askClaude(prompt);
+      const reply = await getReply();
       const blocks = markdownToBlocks(reply);
       const tag = logseq.settings.responseTag;
       if (tag) {
@@ -176,6 +182,64 @@ logseq.ready(() => {
       await logseq.Editor.updateBlock(placeholder.uuid, `Error: ${e.message}`);
       logseq.UI.showMsg(e.message, 'error');
     }
+  }
+
+  async function askBlock(block, mode, prefix = '') {
+    await insertReply(block, async () => {
+      const prompt = prefix + await buildPrompt(block, mode);
+      console.log("Prompt: " + prompt);
+      return askClaude(prompt);
+    });
+  }
+
+  // Reconstruct a prior Ask-Claude exchange as message history, for
+  // `/Claude: Continue`.
+  //
+  // Heuristic (v1, not general thread detection): assumes `block` is a
+  // follow-up the user typed as a further child of the *same parent* that
+  // holds Claude's previously-inserted reply block(s) — i.e. the standard
+  // shape askBlock() produces: prompt block -> reply block(s) as children.
+  // The parent's other children (excluding `block` itself) are treated as
+  // one flattened assistant turn, and buildPrompt(parent, 'ancestors') is
+  // replayed as the original user turn. This does NOT handle: follow-ups
+  // nested *under* a reply block (deeper multi-turn threads), replies that
+  // were edited/reordered/deleted, or more than one round of follow-up
+  // (only the immediate parent is consulted, not further up the chain).
+  // Recursively collect block content under `nodes`, skipping `skipUuid`.
+  // `children` entries can come back as full block entities or as
+  // [type, uuid] tuples depending on the SDK call — handle both, and
+  // recurse so nested (e.g. list) reply content isn't dropped.
+  async function collectContent(nodes, skipUuid, out = []) {
+    for (const n of nodes || []) {
+      const b = Array.isArray(n) ? await logseq.Editor.getBlock(n[1], { includeChildren: true }) : n;
+      if (!b || b.uuid === skipUuid) continue;
+      if (b.content) out.push(b.content);
+      await collectContent(b.children, skipUuid, out);
+    }
+    return out;
+  }
+
+  async function buildConversation(block) {
+    if (!block.parent) return null;
+    const parent = await logseq.Editor.getBlock(block.parent.id, { includeChildren: true });
+    if (!parent) return null;
+    const priorReplies = (await collectContent(parent.children, block.uuid)).join('\n\n');
+    if (!priorReplies) return null; // no prior exchange found to continue
+    const initialPrompt = await buildPrompt(parent, 'ancestors');
+    return [
+      { role: 'user', content: initialPrompt },
+      { role: 'assistant', content: priorReplies },
+      { role: 'user', content: block.content }
+    ];
+  }
+
+  async function continueBlock(block) {
+    const conversation = await buildConversation(block);
+    if (!conversation) {
+      logseq.UI.showMsg('No prior Claude exchange found to continue from here.', 'error');
+      return;
+    }
+    await insertReply(block, () => askClaudeMessages(conversation));
   }
 
   async function getCurrentBlock() {
@@ -212,5 +276,10 @@ logseq.ready(() => {
   logseq.Editor.registerSlashCommand('Claude: Explain', async () => {
     const block = await getCurrentBlock();
     if (block) await askBlock(block, 'ancestors', 'Explain the following simply and clearly:\n\n');
+  });
+
+  logseq.Editor.registerSlashCommand('Claude: Continue', async () => {
+    const block = await getCurrentBlock();
+    if (block) await continueBlock(block);
   });
 });

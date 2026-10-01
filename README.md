@@ -23,6 +23,7 @@ A Logseq plugin that lets you query Claude AI directly from any block using slas
 | `/Claude: Summarize` | Ancestor chain | Summarize concisely |
 | `/Claude: Improve Writing` | Current block only | Rewrite for clarity and style |
 | `/Claude: Explain` | Ancestor chain | Explain simply and clearly |
+| `/Claude: Continue` | Prior exchange as conversation history | Follow up on a previous reply, invoked from a new block alongside it |
 
 ## Installation
 
