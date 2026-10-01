@@ -21,6 +21,6 @@ a la the OpenAI 3 plugin, whi
 Need this in AMMDI anyway...
 DONE? it adds #AskClaude
 
-# TODO publish 
-https://github.com/logseq/marketplace (not sure its worthwhile)
+# DONE (research) publish
+See spec/marketplace-publish.md — turns out this was already submitted (PR logseq/marketplace#757, open since April, unreviewed); doc covers what's left to actually get it merged.
 
