@@ -106,7 +106,7 @@ function markdownToBlocks(md) {
     }
 
     // Paragraph — collect lines until blank/list/header/code
-    let content = line;
+    const paraLines = [line];
     i++;
     while (i < lines.length) {
       const next = lines[i];
@@ -114,8 +114,17 @@ function markdownToBlocks(md) {
       if (next.match(/^(\s*)([-*+]|\d+\.)\s+/)) break;
       if (next.startsWith('#')) break;
       if (next.trimStart().startsWith('```')) break;
-      content += '\n' + next;
+      paraLines.push(next);
       i++;
+    }
+    // Soft-wrapped lines join into one flowing line (Logseq renders \n as a
+    // visible break); keep a real newline only for an explicit hard break.
+    let content = paraLines[0];
+    for (let j = 1; j < paraLines.length; j++) {
+      const hardBreak = /(  |\\)$/.test(paraLines[j - 1]);
+      content = hardBreak
+        ? content.replace(/[ \t]+$/, '') + '\n' + paraLines[j].trim()
+        : content.trimEnd() + ' ' + paraLines[j].trim();
     }
     result.push({ content });
   }
