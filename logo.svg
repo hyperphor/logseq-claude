@@ -1,33 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f0f23"/>
-      <stop offset="100%" stop-color="#1e1e3f"/>
-    </linearGradient>
-    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#60AFFE"/>
-      <stop offset="100%" stop-color="#1565C0"/>
-    </linearGradient>
-    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFB74D"/>
-      <stop offset="100%" stop-color="#E65100"/>
-    </linearGradient>
-  </defs>
+  <!-- Background: solid dark square, opaque so icon reads on light/dark plugin lists -->
+  <rect width="128" height="128" rx="24" fill="#1C1B19"/>
 
-  <!-- Background rounded square -->
-  <rect width="128" height="128" rx="22" fill="url(#bgGrad)"/>
+  <!-- Stem: bubble grows out of the bullet below it -->
+  <rect x="21" y="86" width="10" height="16" rx="3" fill="#CC785C"/>
 
-  <!-- Logseq-inspired graph: triangle of connected nodes (blue) -->
-  <line x1="64" y1="26" x2="24" y2="94" stroke="#60AFFE" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
-  <line x1="64" y1="26" x2="104" y2="94" stroke="#60AFFE" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
-  <line x1="24" y1="94" x2="104" y2="94" stroke="#60AFFE" stroke-width="2.5" stroke-linecap="round" opacity="0.45"/>
+  <!-- Block bullet (Logseq outline bullet), the mark's origin point -->
+  <circle cx="26" cy="107" r="11" fill="#CC785C"/>
 
-  <circle cx="64" cy="26" r="11" fill="url(#blueGrad)"/>
-  <circle cx="24" cy="94" r="11" fill="url(#blueGrad)"/>
-  <circle cx="104" cy="94" r="11" fill="url(#blueGrad)"/>
+  <!-- Speech bubble body: the block's bullet, turned into a question -->
+  <rect x="16" y="14" width="96" height="76" rx="22" fill="#CC785C"/>
 
-  <!-- Claude/Anthropic-inspired diamond in center (orange) -->
-  <polygon points="64,44 86,64 64,84 42,64" fill="url(#orangeGrad)"/>
-  <!-- Inner highlight -->
-  <polygon points="64,54 74,64 64,74 54,64" fill="#FFE0B2" opacity="0.55"/>
+  <!-- Question mark, hand-authored as path + dot (no text glyph) -->
+  <path d="M 54,36 C 54,25 63,20 72,24 C 81,28 81,39 72,44 C 65,48 64,51 64,58"
+        fill="none" stroke="#1C1B19" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="64" cy="75" r="6.5" fill="#1C1B19"/>
 </svg>
