@@ -36,9 +36,9 @@
       {
         "key": "responseTag",
         "type": "string",
-        "default": "",
+        "default": "#AskClaude",
         "title": "Response Tag",
-        "description": "If set, this tag is appended to the first inserted response block (e.g. '#ai-response'). Leave blank to disable."
+        "description": "Each response is nested under a block holding this tag. It marks AI-generated content in the graph, and keeps earlier responses out of the context sent on later queries."
       },
       {
         "key": "webAccess",
