@@ -1,3 +1,8 @@
+# BAD and fundamental BUG
+
+Can't follow Logseq wikilinks! To do that you need something better. 
+
+
 # TODO adjust prompt settings
 Default is block + parents, but often you want siblings.
 Should be controllable by selection (but Logseq selection is very hinky)

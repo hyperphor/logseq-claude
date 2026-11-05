@@ -144,7 +144,56 @@ function markdownToBlocks(md) {
   return result;
 }
 
-async function buildPrompt(block, mode = 'ancestors') {
+// Logseq keeps properties (collapsed::, id::, …) in raw block content; they're
+// noise in a prompt.
+function stripProperties(content) {
+  return content
+    .split('\n')
+    .filter(l => !/^\s*[\w-]+::\s/.test(l))
+    .join('\n')
+    .trim();
+}
+
+function subtreeHas(block, uuid) {
+  if (block.uuid === uuid) return true;
+  return (block.children || []).some(c => subtreeHas(c, uuid));
+}
+
+// Each reply is nested under a wrapper block holding just this tag — it marks
+// the reply in the graph and lets later prompts leave earlier replies out.
+const DEFAULT_RESPONSE_TAG = '#AskClaude';
+
+function responseTag() {
+  return logseq.settings.responseTag || DEFAULT_RESPONSE_TAG;
+}
+
+function isResponseBlock(b) {
+  return stripProperties(b.content || '').startsWith(responseTag());
+}
+
+// Skip an earlier reply — unless the invoking block is inside it, in which case
+// it's the context for a follow-up question.
+function skipAsResponse(b, liveBlock) {
+  return isResponseBlock(b) && !subtreeHas(b, liveBlock.uuid);
+}
+
+// Render blocks as an indented markdown list. liveBlock supplies the live
+// content for the block being edited — persisted content is stale mid-edit.
+function renderTree(blocks, liveBlock, depth = 0, lines = []) {
+  const pad = '  '.repeat(depth);
+  for (const b of blocks) {
+    if (skipAsResponse(b, liveBlock)) continue;
+    const raw = b.uuid === liveBlock.uuid ? liveBlock.content : (b.content || '');
+    const content = stripProperties(raw);
+    if (content) {
+      content.split('\n').forEach((l, i) => lines.push(pad + (i === 0 ? '- ' : '  ') + l));
+    }
+    if (b.children && b.children.length > 0) renderTree(b.children, liveBlock, depth + 1, lines);
+  }
+  return lines;
+}
+
+async function buildPrompt(block, mode = 'tree') {
   if (mode === 'block') {
     return block.content;
   }
@@ -155,6 +204,7 @@ async function buildPrompt(block, mode = 'ancestors') {
     const lines = [`# ${page.name}`];
     function collectUntil(blocks) {
       for (const b of blocks) {
+        if (skipAsResponse(b, block)) continue;
         // getPageBlocksTree reads persisted content, which is stale for the
         // block currently being edited — use the live content we resolved
         // in getCurrentBlock for that one entry.
@@ -171,7 +221,26 @@ async function buildPrompt(block, mode = 'ancestors') {
     return lines.join('\n');
   }
 
-  // ancestors (default)
+  if (mode === 'tree') {
+    // Walk up to the topmost ancestor and send its whole subtree. The page
+    // tree is used rather than getBlock(..., {includeChildren}) because it is
+    // known to be fully recursive.
+    const page = await logseq.Editor.getPage(block.page.id);
+    const pageBlocks = page ? await logseq.Editor.getPageBlocksTree(page.name) : null;
+    const top = pageBlocks && pageBlocks.find(b => subtreeHas(b, block.uuid));
+    // Fall back to just this block's subtree if the page tree isn't available.
+    const root = top || await logseq.Editor.getBlock(block.uuid, { includeChildren: true }) || block;
+    const context = renderTree([root], block).join('\n');
+    const ask = stripProperties(block.content);
+    // The invoking block can sit anywhere in the subtree, so restate it —
+    // otherwise the prompt is an outline with no identifiable question.
+    const aloneInTree = root.uuid === block.uuid && !(root.children && root.children.length > 0);
+    return ask && !aloneInTree
+      ? `${context}\n\nRespond to this item from the outline above:\n\n${ask}`
+      : context;
+  }
+
+  // ancestors
   const chain = [block.content];
   let current = block;
   while (current.parent && current.parent.id !== current.page.id) {
@@ -185,18 +254,25 @@ async function buildPrompt(block, mode = 'ancestors') {
 
 logseq.ready(() => {
   async function askBlock(block, mode, prefix = '') {
+    // Build the prompt before inserting the placeholder — in tree mode the
+    // placeholder would otherwise show up inside the context we collect.
+    let prompt;
+    try {
+      prompt = prefix + await buildPrompt(block, mode);
+    } catch (e) {
+      logseq.UI.showMsg(e.message, 'error');
+      return;
+    }
     const placeholder = await logseq.Editor.insertBlock(block.uuid, '⏳ thinking...', { sibling: false });
     try {
-      const prompt = prefix + await buildPrompt(block, mode);
       console.log("Prompt: " + prompt);
       const reply = await askClaude(prompt);
       const blocks = markdownToBlocks(reply);
-      const tag = logseq.settings.responseTag;
-      if (tag) {
-        await logseq.Editor.updateBlock(block.uuid, block.content + ' ' + tag);
-      }
+      // Hang the reply off a fresh tag block, then drop the placeholder — in
+      // that order, so a failure here still has the placeholder to report in.
+      const wrapper = await logseq.Editor.insertBlock(block.uuid, responseTag(), { sibling: false });
+      await logseq.Editor.insertBatchBlock(wrapper.uuid, blocks, { sibling: false });
       await logseq.Editor.removeBlock(placeholder.uuid);
-      await logseq.Editor.insertBatchBlock(block.uuid, blocks, { sibling: false });
     } catch (e) {
       await logseq.Editor.updateBlock(placeholder.uuid, `Error: ${e.message}`);
       logseq.UI.showMsg(e.message, 'error');
@@ -250,7 +326,7 @@ logseq.ready(() => {
 
   logseq.Editor.registerSlashCommand('Ask Claude', async () => {
     const block = await getCurrentBlock();
-    if (block) await askBlock(block, 'ancestors');
+    if (block) await askBlock(block, 'tree');
   });
 
   logseq.Editor.registerSlashCommand('Ask Claude (page)', async () => {

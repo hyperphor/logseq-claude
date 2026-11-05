@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A minimal Logseq plugin that adds an `/Ask Claude` slash command. When invoked on a block, it sends the block's content to the Anthropic API and inserts the response as a child block.
+A minimal Logseq plugin that adds an `/Ask Claude` slash command. When invoked on a block, it sends surrounding context (by default the whole top-level subtree the block sits in, minus earlier replies) to the Anthropic API and inserts the response under a block holding the response tag (default `#AskClaude`), which is also how earlier responses are recognized and excluded.
 
 ## Architecture
 
@@ -30,4 +30,7 @@ Settings are stored by Logseq in `~/.logseq/settings/logseq-claude.json`. Requir
 - `logseq.Editor.insertBlock(uuid, text, { sibling: false })` — insert a child block
 - `logseq.Editor.getBlock(uuid, { includeChildren: true })` — fetch block with children
 - `logseq.Editor.updateBlock(uuid, text)` — replace a block's content
+- `logseq.Editor.getPageBlocksTree(pageName)` — full recursive block tree for a page
+- `logseq.Editor.insertBatchBlock(uuid, blocks, { sibling: false })` — insert a nested batch
+- `logseq.Editor.removeBlock(uuid)` — delete a block
 - `logseq.UI.showMsg(msg, 'error')` — show a toast notification
