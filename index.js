@@ -85,6 +85,18 @@ function markdownToBlocks(md) {
       continue;
     }
 
+    // Table — keep contiguous pipe rows as one block with their newlines
+    // (the paragraph rule below would join the rows into one line)
+    if (line.trimStart().startsWith('|')) {
+      const rows = [];
+      while (i < lines.length && lines[i].trimStart().startsWith('|')) {
+        rows.push(lines[i].trim());
+        i++;
+      }
+      result.push({ content: rows.join('\n') });
+      continue;
+    }
+
     // List items — collect contiguous list, then nest by indentation
     if (line.match(/^(\s*)([-*+]|\d+\.)\s+/)) {
       const items = [];
